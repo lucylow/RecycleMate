@@ -34,7 +34,23 @@ const AppScreen = () => {
   const [detections, setDetections] = useState<DetectedItem[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { points, streak } = useUser();
+  const [seenAchievements, setSeenAchievements] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("recyclemate_seen_achievements") || "[]");
+    } catch { return []; }
+  });
+  const { points, streak, achievements } = useUser();
+
+  const unseenCount = achievements.filter(a => !seenAchievements.includes(a)).length;
+
+  const handleOpenDrawer = () => {
+    setDrawerOpen(true);
+    if (unseenCount > 0) {
+      const updated = [...new Set([...seenAchievements, ...achievements])];
+      setSeenAchievements(updated);
+      localStorage.setItem("recyclemate_seen_achievements", JSON.stringify(updated));
+    }
+  };
 
   useEffect(() => {
     const onboarded = localStorage.getItem("recyclemate_onboarded");
@@ -157,10 +173,19 @@ const AppScreen = () => {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <button
-          onClick={() => setDrawerOpen(true)}
-          className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press"
+          onClick={handleOpenDrawer}
+          className="relative w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press"
         >
           <Menu className="w-5 h-5 text-foreground" />
+          {unseenCount > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center"
+            >
+              {unseenCount}
+            </motion.span>
+          )}
         </button>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
