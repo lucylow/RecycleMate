@@ -1,6 +1,16 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Leaf, Droplets, TreePine, Recycle } from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+
+const CO2_PER_ITEM = 0.157;
+const WATER_PER_ITEM = 7.6;
+const TREES_PER_ITEM = 0.02;
 
 const ProgressBar = ({ value, max, color = "bg-primary" }: { value: number; max: number; color?: string }) => {
   const pct = Math.min((value / max) * 100, 100);
@@ -16,15 +26,73 @@ const ProgressBar = ({ value, max, color = "bg-primary" }: { value: number; max:
   );
 };
 
+const co2ChartConfig: ChartConfig = {
+  co2: { label: "CO₂ Saved (kg)", color: "hsl(var(--success))" },
+};
+
+const weeklyChartConfig: ChartConfig = {
+  items: { label: "Items Recycled", color: "hsl(var(--primary))" },
+  water: { label: "Water Saved (L)", color: "hsl(142 71% 45%)" },
+};
+
 const ImpactPage = () => {
-  const { scanHistory, points } = useUser();
+  const { scanHistory } = useUser();
   const totalItems = scanHistory.reduce((sum, r) => sum + r.items.length, 0);
 
-  // Mock environmental calculations
-  const co2Saved = (totalItems * 0.157).toFixed(1);
-  const waterSaved = Math.round(totalItems * 7.6);
-  const treesEquiv = (totalItems * 0.02).toFixed(2);
+  const co2Saved = (totalItems * CO2_PER_ITEM).toFixed(1);
+  const waterSaved = Math.round(totalItems * WATER_PER_ITEM);
+  const treesEquiv = (totalItems * TREES_PER_ITEM).toFixed(2);
   const monthlyGoal = 200;
+
+  // Build daily CO₂ chart data from scan history (last 14 days)
+  const co2DailyData = useMemo(() => {
+    const now = new Date();
+    const days: Record<string, number> = {};
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days[d.toISOString().slice(0, 10)] = 0;
+    }
+    scanHistory.forEach((r) => {
+      const key = new Date(r.timestamp).toISOString().slice(0, 10);
+      if (key in days) {
+        days[key] += r.items.length * CO2_PER_ITEM;
+      }
+    });
+    // cumulative
+    let cumulative = 0;
+    return Object.entries(days).map(([date, val]) => {
+      cumulative += val;
+      return {
+        date: new Date(date).toLocaleDateString("en", { month: "short", day: "numeric" }),
+        co2: +cumulative.toFixed(2),
+      };
+    });
+  }, [scanHistory]);
+
+  // Build weekly bar chart data (last 7 days)
+  const weeklyData = useMemo(() => {
+    const now = new Date();
+    const days: Record<string, { items: number; water: number }> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days[d.toISOString().slice(0, 10)] = { items: 0, water: 0 };
+    }
+    scanHistory.forEach((r) => {
+      const key = new Date(r.timestamp).toISOString().slice(0, 10);
+      if (key in days) {
+        const count = r.items.length;
+        days[key].items += count;
+        days[key].water += count * WATER_PER_ITEM;
+      }
+    });
+    return Object.entries(days).map(([date, val]) => ({
+      date: new Date(date).toLocaleDateString("en", { weekday: "short" }),
+      items: val.items,
+      water: +val.water.toFixed(1),
+    }));
+  }, [scanHistory]);
 
   const stats = [
     { icon: <Recycle className="w-5 h-5" />, value: totalItems, label: "Items Recycled", color: "text-primary" },
@@ -32,6 +100,8 @@ const ImpactPage = () => {
     { icon: <Droplets className="w-5 h-5" />, value: `${waterSaved} L`, label: "Water Saved", color: "text-primary" },
     { icon: <TreePine className="w-5 h-5" />, value: treesEquiv, label: "Trees Equivalent", color: "text-success" },
   ];
+
+  const hasData = scanHistory.length > 0;
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -58,6 +128,70 @@ const ImpactPage = () => {
         </p>
       </motion.div>
 
+      {/* CO₂ Area Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="p-5 rounded-3xl border border-border bg-card shadow-soft"
+      >
+        <h3 className="text-sm font-semibold mb-1">CO₂ Savings Over Time</h3>
+        <p className="text-xs text-muted-foreground mb-4">Cumulative CO₂ saved (last 14 days)</p>
+        {hasData ? (
+          <ChartContainer config={co2ChartConfig} className="aspect-[2/1] w-full">
+            <AreaChart data={co2DailyData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+              <defs>
+                <linearGradient id="co2Gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} unit=" kg" />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Area
+                type="monotone"
+                dataKey="co2"
+                stroke="hsl(var(--success))"
+                strokeWidth={2}
+                fill="url(#co2Gradient)"
+              />
+            </AreaChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
+            Start scanning to see your CO₂ impact here
+          </div>
+        )}
+      </motion.div>
+
+      {/* Weekly Bar Chart */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="p-5 rounded-3xl border border-border bg-card shadow-soft"
+      >
+        <h3 className="text-sm font-semibold mb-1">Weekly Activity</h3>
+        <p className="text-xs text-muted-foreground mb-4">Items recycled per day (last 7 days)</p>
+        {hasData ? (
+          <ChartContainer config={weeklyChartConfig} className="aspect-[2/1] w-full">
+            <BarChart data={weeklyData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="items" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
+            Start scanning to see weekly activity
+          </div>
+        )}
+      </motion.div>
+
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-4">
         {stats.map((stat, i) => (
@@ -65,7 +199,7 @@ const ImpactPage = () => {
             key={stat.label}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: 0.15 + i * 0.05 }}
             className="p-5 rounded-2xl border border-border bg-card shadow-soft text-center"
           >
             <div className={`mx-auto mb-2 ${stat.color}`}>{stat.icon}</div>
