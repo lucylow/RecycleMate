@@ -1,20 +1,37 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Star, Clock } from "lucide-react";
+import { ArrowLeft, Flame, Star, Clock, Trophy, Target } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 
 interface ProfileViewProps {
   onBack: () => void;
 }
 
-const BADGES: Record<string, { name: string; description: string; icon: string }> = {
-  first_scan: { name: "First Scan", description: "Completed your first scan", icon: "🎯" },
-  eco_starter: { name: "Eco Starter", description: "Earned 50 points", icon: "🌱" },
-  planet_protector: { name: "Planet Protector", description: "Earned 100 points", icon: "🛡️" },
-  sorting_master: { name: "Sorting Master", description: "Earned 500 points", icon: "🏆" },
+const BADGES: Record<string, { name: string; description: string; icon: string; threshold: number }> = {
+  first_scan: { name: "First Scan", description: "Complete your first scan", icon: "🎯", threshold: 10 },
+  eco_starter: { name: "Eco Starter", description: "Earn 50 points", icon: "🌱", threshold: 50 },
+  planet_protector: { name: "Planet Protector", description: "Earn 100 points", icon: "🛡️", threshold: 100 },
+  sorting_master: { name: "Sorting Master", description: "Earn 500 points", icon: "🏆", threshold: 500 },
+};
+
+const NEXT_LEVEL = 500;
+
+const ProgressBar = ({ value, max, color = "bg-primary" }: { value: number; max: number; color?: string }) => {
+  const pct = Math.min((value / max) * 100, 100);
+  return (
+    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${pct}%` }}
+        transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+        className={`h-full rounded-full ${color}`}
+      />
+    </div>
+  );
 };
 
 const ProfileView = ({ onBack }: ProfileViewProps) => {
   const { points, streak, achievements, scanHistory } = useUser();
+  const totalScans = scanHistory.length;
 
   return (
     <div className="flex-1 flex flex-col bg-background overflow-hidden">
@@ -28,45 +45,82 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
-        {/* Stats cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-3xl border border-border bg-card shadow-soft text-center"
-          >
-            <Star className="w-6 h-6 text-primary mx-auto mb-2" />
-            <p className="font-mono text-3xl font-semibold tracking-tighter text-primary">{points}</p>
-            <p className="text-label text-muted-foreground mt-1">Total Points</p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="p-6 rounded-3xl border border-border bg-card shadow-soft text-center"
-          >
-            <Flame className="w-6 h-6 text-warning mx-auto mb-2" />
-            <p className="font-mono text-3xl font-semibold tracking-tighter text-warning">{streak}</p>
-            <p className="text-label text-muted-foreground mt-1">Day Streak</p>
-          </motion.div>
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: <Star className="w-5 h-5 text-primary" />, value: points, label: "Points", color: "text-primary" },
+            { icon: <Flame className="w-5 h-5 text-warning" />, value: streak, label: "Streak", color: "text-warning" },
+            { icon: <Target className="w-5 h-5 text-success" />, value: totalScans, label: "Scans", color: "text-success" },
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="p-4 rounded-2xl border border-border bg-card shadow-soft text-center"
+            >
+              <div className="mx-auto mb-2">{stat.icon}</div>
+              <p className={`font-mono text-2xl font-semibold tracking-tighter ${stat.color}`}>{stat.value}</p>
+              <p className="text-label text-muted-foreground mt-1">{stat.label}</p>
+            </motion.div>
+          ))}
         </div>
+
+        {/* Level progress */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="p-5 rounded-2xl border border-border bg-card shadow-soft"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">Level Progress</span>
+            </div>
+            <span className="font-mono text-xs text-muted-foreground">{points} / {NEXT_LEVEL}</span>
+          </div>
+          <ProgressBar value={points} max={NEXT_LEVEL} />
+          <p className="text-xs text-muted-foreground mt-2">
+            {NEXT_LEVEL - points > 0 ? `${NEXT_LEVEL - points} points to next level` : "Level complete! 🎉"}
+          </p>
+        </motion.div>
 
         {/* Achievements */}
         <div>
           <h3 className="text-label text-muted-foreground mb-4">Achievements</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {Object.entries(BADGES).map(([key, badge]) => {
+          <div className="space-y-3">
+            {Object.entries(BADGES).map(([key, badge], i) => {
               const unlocked = achievements.includes(key);
+              const progress = Math.min(points / badge.threshold, 1);
               return (
                 <motion.div
                   key={key}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`p-4 rounded-2xl border ${unlocked ? "border-primary bg-primary/5" : "border-border bg-secondary/50 opacity-40"}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + i * 0.05 }}
+                  className={`p-4 rounded-2xl border flex items-center gap-4 ${
+                    unlocked ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+                  }`}
                 >
-                  <span className="text-2xl">{badge.icon}</span>
-                  <p className="font-semibold text-sm mt-2">{badge.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{badge.description}</p>
+                  <span className={`text-2xl ${!unlocked && "grayscale opacity-40"}`}>{badge.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className={`font-semibold text-sm ${!unlocked && "text-muted-foreground"}`}>{badge.name}</p>
+                      {unlocked && (
+                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">UNLOCKED</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
+                    <ProgressBar
+                      value={points}
+                      max={badge.threshold}
+                      color={unlocked ? "bg-primary" : "bg-muted-foreground/30"}
+                    />
+                    <p className="font-mono text-[10px] text-muted-foreground mt-1">
+                      {Math.min(points, badge.threshold)} / {badge.threshold}
+                    </p>
+                  </div>
                 </motion.div>
               );
             })}
@@ -77,12 +131,24 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
         <div>
           <h3 className="text-label text-muted-foreground mb-4">Recent Scans</h3>
           {scanHistory.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8 text-sm">No scans yet. Start scanning!</p>
+            <div className="text-center py-10">
+              <Target className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No scans yet</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Start scanning to build your history</p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {scanHistory.slice(0, 10).map((record) => (
-                <div key={record.id} className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card">
-                  <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="space-y-2">
+              {scanHistory.slice(0, 10).map((record, i) => (
+                <motion.div
+                  key={record.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-primary" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
                       {record.items.map(i => i.displayName).join(", ")}
@@ -91,8 +157,10 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
                       {record.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-primary">+{record.pointsEarned}</span>
-                </div>
+                  <span className="text-xs font-semibold text-success bg-success/10 px-2 py-1 rounded-lg">
+                    +{record.pointsEarned}
+                  </span>
+                </motion.div>
               ))}
             </div>
           )}
