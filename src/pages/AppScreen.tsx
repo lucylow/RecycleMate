@@ -1,18 +1,39 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Scan, User } from "lucide-react";
+import {
+  Scan, User, Menu, X, Clock, Leaf, Settings, HelpCircle, Info,
+  Star, Flame,
+} from "lucide-react";
 import ScannerView from "@/components/ScannerView";
 import ResultsView from "@/components/ResultsView";
 import ProfileView from "@/components/ProfileView";
 import OnboardingOverlay from "@/components/OnboardingOverlay";
+import HistoryPage from "@/components/app-pages/HistoryPage";
+import ImpactPage from "@/components/app-pages/ImpactPage";
+import SettingsPage from "@/components/app-pages/SettingsPage";
+import HelpPage from "@/components/app-pages/HelpPage";
+import AboutPage from "@/components/app-pages/AboutPage";
 import type { DetectedItem } from "@/context/UserContext";
+import { useUser } from "@/context/UserContext";
 
-type AppView = "scanner" | "results" | "profile";
+type AppView = "scanner" | "results" | "profile" | "history" | "impact" | "settings" | "help" | "about";
+
+const NAV_ITEMS: { id: AppView; icon: React.ElementType; label: string; group: "main" | "more" }[] = [
+  { id: "scanner", icon: Scan, label: "Scanner", group: "main" },
+  { id: "profile", icon: User, label: "Profile", group: "main" },
+  { id: "history", icon: Clock, label: "History", group: "more" },
+  { id: "impact", icon: Leaf, label: "Impact", group: "more" },
+  { id: "settings", icon: Settings, label: "Settings", group: "more" },
+  { id: "help", icon: HelpCircle, label: "Help & FAQ", group: "more" },
+  { id: "about", icon: Info, label: "About", group: "more" },
+];
 
 const AppScreen = () => {
   const [view, setView] = useState<AppView>("scanner");
   const [detections, setDetections] = useState<DetectedItem[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { points, streak } = useUser();
 
   useEffect(() => {
     const onboarded = localStorage.getItem("recyclemate_onboarded");
@@ -24,6 +45,14 @@ const AppScreen = () => {
     setView("results");
   };
 
+  const navigateTo = (target: AppView) => {
+    setView(target);
+    setDrawerOpen(false);
+  };
+
+  const mainItems = NAV_ITEMS.filter((n) => n.group === "main");
+  const moreItems = NAV_ITEMS.filter((n) => n.group === "more");
+
   return (
     <div className="h-[100dvh] flex flex-col bg-background max-w-md mx-auto relative overflow-hidden">
       {/* Onboarding */}
@@ -33,34 +62,148 @@ const AppScreen = () => {
         )}
       </AnimatePresence>
 
+      {/* Drawer overlay */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDrawerOpen(false)}
+              className="absolute inset-0 z-40 bg-foreground/30"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              className="absolute left-0 top-0 bottom-0 z-50 w-72 bg-background border-r border-border flex flex-col shadow-elevated"
+            >
+              {/* Drawer header */}
+              <div className="p-6 bg-primary rounded-br-3xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
+                    <span className="text-primary-foreground font-bold text-lg">R</span>
+                  </div>
+                  <button onClick={() => setDrawerOpen(false)} className="w-8 h-8 rounded-lg bg-primary-foreground/10 flex items-center justify-center active-press">
+                    <X className="w-4 h-4 text-primary-foreground" />
+                  </button>
+                </div>
+                <p className="text-primary-foreground font-semibold">Eco Warrior</p>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-primary-foreground/70" />
+                    <span className="text-primary-foreground/80 text-xs font-mono">{points} pts</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-primary-foreground/70" />
+                    <span className="text-primary-foreground/80 text-xs font-mono">{streak} days</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nav items */}
+              <div className="flex-1 overflow-y-auto py-4 px-3">
+                <p className="text-label text-muted-foreground px-3 mb-2">Main</p>
+                {mainItems.map((item) => {
+                  const active = view === item.id || (view === "results" && item.id === "scanner");
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateTo(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm mb-0.5 active-press transition-colors ${
+                        active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+
+                <div className="my-3 h-px bg-border" />
+
+                <p className="text-label text-muted-foreground px-3 mb-2">More</p>
+                {moreItems.map((item) => {
+                  const active = view === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateTo(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm mb-0.5 active-press transition-colors ${
+                        active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Drawer footer */}
+              <div className="p-4 border-t border-border">
+                <p className="font-mono text-[10px] text-muted-foreground text-center tracking-wider">
+                  RECYCLEMATE V1.0 · SDG 12
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 pt-4 pb-2">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press"
+        >
+          <Menu className="w-5 h-5 text-foreground" />
+        </button>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-semibold text-xs">R</span>
+          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-semibold text-[10px]">R</span>
           </div>
-          <span className="font-semibold tracking-tight">RecycleMate</span>
+          <span className="font-semibold tracking-tight text-sm">RecycleMate</span>
         </div>
-        <span className="text-label text-muted-foreground">
-          {view === "scanner" ? "Scanner" : view === "results" ? "Results" : "Profile"}
+        <span className="text-label text-muted-foreground w-10 text-right text-[10px]">
+          {view === "scanner" ? "SCAN" : view === "results" ? "RESULT" : view.toUpperCase().slice(0, 6)}
         </span>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col px-4 pb-20 overflow-hidden">
         <AnimatePresence mode="wait">
-          {view === "scanner" && (
-            <ScannerView key="scanner" onDetection={handleDetection} />
-          )}
+          {view === "scanner" && <ScannerView key="scanner" onDetection={handleDetection} />}
           {view === "results" && (
-            <ResultsView
-              key="results"
-              detections={detections}
-              onBack={() => setView("scanner")}
-            />
+            <ResultsView key="results" detections={detections} onBack={() => setView("scanner")} />
           )}
-          {view === "profile" && (
-            <ProfileView key="profile" onBack={() => setView("scanner")} />
+          {view === "profile" && <ProfileView key="profile" onBack={() => setView("scanner")} />}
+          {view === "history" && (
+            <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+              <HistoryPage />
+            </motion.div>
+          )}
+          {view === "impact" && (
+            <motion.div key="impact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+              <ImpactPage />
+            </motion.div>
+          )}
+          {view === "settings" && (
+            <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+              <SettingsPage />
+            </motion.div>
+          )}
+          {view === "help" && (
+            <motion.div key="help" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+              <HelpPage />
+            </motion.div>
+          )}
+          {view === "about" && (
+            <motion.div key="about" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+              <AboutPage />
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -75,7 +218,7 @@ const AppScreen = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setView(tab.id)}
+              onClick={() => navigateTo(tab.id)}
               className={`flex flex-col items-center gap-1 active-press relative ${active ? "text-primary" : "text-muted-foreground"}`}
             >
               <tab.icon className="w-5 h-5" />
