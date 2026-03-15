@@ -23,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/app" element={<AppScreen />} />
             <Route path="/docs/graphql-security" element={<GraphQLSecurityDocs />} />
+            <Route path="/docs/ai-vision" element={<AIVisionDocs />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
