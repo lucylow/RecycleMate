@@ -130,6 +130,7 @@
     box-shadow: var(--shadow-elevated);
   }
   .active-press {
-    @apply active:scale-[0.97] transition-transform duration-[20ms];
+    @apply active:scale-[0.97] transition-transform;
+    transition-duration: 20ms;
   }
 }
