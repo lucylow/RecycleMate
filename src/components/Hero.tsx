@@ -41,9 +41,9 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium text-base active-press shadow-soft">
-              Download the App
-            </button>
+            <Link to="/app" className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium text-base active-press shadow-soft text-center">
+              Try the Scanner
+            </Link>
             <button className="px-8 py-4 bg-secondary text-secondary-foreground rounded-2xl font-medium text-base active-press">
               Watch Demo
             </button>
