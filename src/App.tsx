@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserProvider } from "@/context/UserContext";
 import Index from "./pages/Index.tsx";
 import AppScreen from "./pages/AppScreen.tsx";
+import GraphQLSecurityDocs from "./pages/GraphQLSecurityDocs.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
