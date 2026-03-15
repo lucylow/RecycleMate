@@ -22,7 +22,7 @@ const steps = [
   },
 ];
 
-const transition = { type: "spring", stiffness: 500, damping: 30, mass: 1 };
+const transition = { type: "spring" as const, stiffness: 500, damping: 30, mass: 1 };
 
 const HowItWorks = () => {
   return (
