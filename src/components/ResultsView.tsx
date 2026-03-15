@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, MapPin, Award } from "lucide-react";
+import { ArrowLeft, MapPin, Award, CheckCircle2, Sparkles } from "lucide-react";
 import type { DetectedItem } from "@/context/UserContext";
 import { useUser } from "@/context/UserContext";
 import { getDisposalInstructions, type DisposalInstruction } from "@/services/api";
+import { toast } from "sonner";
 
 interface ResultsViewProps {
   detections: DetectedItem[];
@@ -12,11 +13,11 @@ interface ResultsViewProps {
 
 const brandSpring = { type: "spring" as const, stiffness: 500, damping: 30, mass: 1 };
 
-const BIN_STYLES: Record<string, { bg: string; text: string }> = {
-  primary: { bg: "bg-primary", text: "text-primary-foreground" },
-  foreground: { bg: "bg-foreground", text: "text-background" },
-  success: { bg: "bg-success", text: "text-success-foreground" },
-  warning: { bg: "bg-warning", text: "text-warning-foreground" },
+const BIN_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  primary: { bg: "bg-primary", text: "text-primary-foreground", border: "border-primary/20" },
+  foreground: { bg: "bg-foreground", text: "text-background", border: "border-foreground/20" },
+  success: { bg: "bg-success", text: "text-success-foreground", border: "border-success/20" },
+  warning: { bg: "bg-warning", text: "text-warning-foreground", border: "border-warning/20" },
 };
 
 const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
@@ -26,12 +27,12 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
   const { addPoints, incrementStreak, addScanRecord } = useUser();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const data = await getDisposalInstructions(detections);
       setInstructions(data);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [detections]);
 
   const handleConfirm = () => {
@@ -45,7 +46,8 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
       pointsEarned: pts,
     });
     setConfirmed(true);
-    setTimeout(onBack, 1500);
+    toast.success(`+${pts} points earned! Keep sorting! 🌍`);
+    setTimeout(onBack, 1800);
   };
 
   return (
@@ -61,17 +63,20 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
         <button onClick={onBack} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <span className="text-label text-muted-foreground">
-          {detections.length} Item{detections.length > 1 ? "s" : ""} Detected
-        </span>
+        <div className="text-center">
+          <span className="text-label text-muted-foreground block">
+            {detections.length} Item{detections.length > 1 ? "s" : ""} Detected
+          </span>
+        </div>
         <div className="w-10" />
       </div>
 
       {/* Scrollable results */}
       <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">Getting recycling rules...</p>
           </div>
         ) : (
           instructions.map((inst, i) => {
@@ -79,10 +84,10 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
             return (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="p-6 rounded-3xl border border-border bg-card shadow-soft"
+                transition={{ delay: i * 0.12, ...brandSpring }}
+                className={`p-6 rounded-3xl border bg-card shadow-soft ${style.border}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-label text-muted-foreground">{inst.material}</span>
@@ -92,6 +97,25 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
                 </div>
                 <h3 className="text-lg font-semibold tracking-tight mb-2">{inst.item}</h3>
                 <p className="text-muted-foreground leading-relaxed text-sm">{inst.instruction}</p>
+
+                {/* Confidence bar */}
+                <div className="mt-4 pt-3 border-t border-border">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-[10px] text-muted-foreground tracking-wider uppercase">Confidence</span>
+                    <span className="font-mono text-xs text-foreground font-medium">
+                      {(detections[i]?.confidence * 100 || 95).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(detections[i]?.confidence || 0.95) * 100}%` }}
+                      transition={{ delay: i * 0.12 + 0.3, duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+                      className="h-full bg-primary rounded-full"
+                    />
+                  </div>
+                </div>
+
                 {inst.dropoff && (
                   <div className="flex items-start gap-2 mt-3 pt-3 border-t border-border">
                     <MapPin className="w-4 h-4 text-warning mt-0.5 shrink-0" />
@@ -111,18 +135,22 @@ const ResultsView = ({ detections, onBack }: ResultsViewProps) => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              transition={brandSpring}
               className="flex items-center justify-center gap-3 py-4 bg-success text-success-foreground rounded-2xl font-medium"
             >
-              <Award className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" />
               +{detections.length * 10} Points Earned!
+              <CheckCircle2 className="w-5 h-5" />
             </motion.div>
           ) : (
-            <button
+            <motion.button
               onClick={handleConfirm}
-              className="w-full py-4 bg-foreground text-background rounded-2xl font-medium active-press"
+              whileTap={{ scale: 0.97 }}
+              className="w-full py-4 bg-foreground text-background rounded-2xl font-medium flex items-center justify-center gap-2"
             >
+              <Award className="w-5 h-5" />
               Confirm & Earn +{detections.length * 10} pts
-            </button>
+            </motion.button>
           )}
         </div>
       )}
