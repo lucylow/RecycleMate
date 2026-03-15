@@ -46,6 +46,15 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
+        {/* Eco Avatar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-center py-2"
+        >
+          <EcoAvatar points={points} size={90} />
+        </motion.div>
+
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
