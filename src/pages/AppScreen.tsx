@@ -22,13 +22,15 @@ import TipsPage from "@/components/app-pages/TipsPage";
 import type { DetectedItem } from "@/context/UserContext";
 import { useUser } from "@/context/UserContext";
 
-type AppView = "scanner" | "results" | "profile" | "history" | "impact" | "settings" | "help" | "about" | "quiz" | "community" | "challenges";
+type AppView = "scanner" | "results" | "profile" | "history" | "impact" | "settings" | "help" | "about" | "quiz" | "community" | "challenges" | "chat" | "tips";
 
-const NAV_ITEMS: { id: AppView; icon: React.ElementType; label: string; group: "main" | "engage" | "more" }[] = [
+const NAV_ITEMS: { id: AppView; icon: React.ElementType; label: string; group: "main" | "ai" | "engage" | "more" }[] = [
   { id: "scanner", icon: Scan, label: "Scanner", group: "main" },
   { id: "profile", icon: User, label: "Profile", group: "main" },
+  { id: "chat", icon: MessageCircle, label: "AI Chat", group: "ai" },
+  { id: "tips", icon: Lightbulb, label: "Daily Tips", group: "ai" },
+  { id: "quiz", icon: Brain, label: "AI Quiz", group: "ai" },
   { id: "challenges", icon: Target, label: "Challenges", group: "engage" },
-  { id: "quiz", icon: Brain, label: "Quiz", group: "engage" },
   { id: "community", icon: Users, label: "Community", group: "engage" },
   { id: "history", icon: Clock, label: "History", group: "more" },
   { id: "impact", icon: Leaf, label: "Impact", group: "more" },
