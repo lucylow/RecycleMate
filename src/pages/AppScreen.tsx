@@ -17,6 +17,8 @@ import AboutPage from "@/components/app-pages/AboutPage";
 import QuizPage from "@/components/app-pages/QuizPage";
 import CommunityPage from "@/components/app-pages/CommunityPage";
 import ChallengesPage from "@/components/app-pages/ChallengesPage";
+import ChatPage from "@/components/app-pages/ChatPage";
+import TipsPage from "@/components/app-pages/TipsPage";
 import type { DetectedItem } from "@/context/UserContext";
 import { useUser } from "@/context/UserContext";
 
