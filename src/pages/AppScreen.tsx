@@ -299,6 +299,15 @@ const AppScreen = () => {
                 <ChallengesPage />
               </motion.div>
             )}
+            {view === "chat" && (
+              <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden">
+                <ChatPage />
+              </motion.div>
+            )}
+            {view === "tips" && (
+              <motion.div key="tips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+                <TipsPage />
+              </motion.div>
           </AnimatePresence>
         </div>
       </ErrorBoundary>
