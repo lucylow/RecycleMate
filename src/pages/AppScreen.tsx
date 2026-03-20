@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Scan, User, Menu, X, Clock, Leaf, Settings, HelpCircle, Info,
-  Star, Flame, Brain, Users, Target,
+  Star, Flame, Brain, Users, Target, MessageCircle, Lightbulb, Sparkles,
 } from "lucide-react";
 import ScannerView from "@/components/ScannerView";
 import ResultsView from "@/components/ResultsView";
@@ -17,16 +17,20 @@ import AboutPage from "@/components/app-pages/AboutPage";
 import QuizPage from "@/components/app-pages/QuizPage";
 import CommunityPage from "@/components/app-pages/CommunityPage";
 import ChallengesPage from "@/components/app-pages/ChallengesPage";
+import ChatPage from "@/components/app-pages/ChatPage";
+import TipsPage from "@/components/app-pages/TipsPage";
 import type { DetectedItem } from "@/context/UserContext";
 import { useUser } from "@/context/UserContext";
 
-type AppView = "scanner" | "results" | "profile" | "history" | "impact" | "settings" | "help" | "about" | "quiz" | "community" | "challenges";
+type AppView = "scanner" | "results" | "profile" | "history" | "impact" | "settings" | "help" | "about" | "quiz" | "community" | "challenges" | "chat" | "tips";
 
-const NAV_ITEMS: { id: AppView; icon: React.ElementType; label: string; group: "main" | "engage" | "more" }[] = [
+const NAV_ITEMS: { id: AppView; icon: React.ElementType; label: string; group: "main" | "ai" | "engage" | "more" }[] = [
   { id: "scanner", icon: Scan, label: "Scanner", group: "main" },
   { id: "profile", icon: User, label: "Profile", group: "main" },
+  { id: "chat", icon: MessageCircle, label: "AI Chat", group: "ai" },
+  { id: "tips", icon: Lightbulb, label: "Daily Tips", group: "ai" },
+  { id: "quiz", icon: Brain, label: "AI Quiz", group: "ai" },
   { id: "challenges", icon: Target, label: "Challenges", group: "engage" },
-  { id: "quiz", icon: Brain, label: "Quiz", group: "engage" },
   { id: "community", icon: Users, label: "Community", group: "engage" },
   { id: "history", icon: Clock, label: "History", group: "more" },
   { id: "impact", icon: Leaf, label: "Impact", group: "more" },
@@ -74,6 +78,7 @@ const AppScreen = () => {
   };
 
   const mainItems = NAV_ITEMS.filter((n) => n.group === "main");
+  const aiItems = NAV_ITEMS.filter((n) => n.group === "ai");
   const engageItems = NAV_ITEMS.filter((n) => n.group === "engage");
   const moreItems = NAV_ITEMS.filter((n) => n.group === "more");
 
@@ -132,6 +137,27 @@ const AppScreen = () => {
                 <p className="text-label text-muted-foreground px-3 mb-2">Main</p>
                 {mainItems.map((item) => {
                   const active = view === item.id || (view === "results" && item.id === "scanner");
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateTo(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm mb-0.5 active-press transition-colors ${
+                        active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+
+                <div className="my-3 h-px bg-border" />
+
+                <p className="text-label text-primary px-3 mb-2 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" /> AI-Powered
+                </p>
+                {aiItems.map((item) => {
+                  const active = view === item.id;
                   return (
                     <button
                       key={item.id}
@@ -271,6 +297,16 @@ const AppScreen = () => {
             {view === "challenges" && (
               <motion.div key="challenges" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
                 <ChallengesPage />
+              </motion.div>
+            )}
+            {view === "chat" && (
+              <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden">
+                <ChatPage />
+              </motion.div>
+            )}
+            {view === "tips" && (
+              <motion.div key="tips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+                <TipsPage />
               </motion.div>
             )}
           </AnimatePresence>
