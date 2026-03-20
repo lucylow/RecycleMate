@@ -78,6 +78,7 @@ const AppScreen = () => {
   };
 
   const mainItems = NAV_ITEMS.filter((n) => n.group === "main");
+  const aiItems = NAV_ITEMS.filter((n) => n.group === "ai");
   const engageItems = NAV_ITEMS.filter((n) => n.group === "engage");
   const moreItems = NAV_ITEMS.filter((n) => n.group === "more");
 
