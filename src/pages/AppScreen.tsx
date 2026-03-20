@@ -308,6 +308,7 @@ const AppScreen = () => {
               <motion.div key="tips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
                 <TipsPage />
               </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </ErrorBoundary>
