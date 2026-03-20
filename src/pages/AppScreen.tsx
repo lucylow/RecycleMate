@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Scan, User, Menu, X, Clock, Leaf, Settings, HelpCircle, Info,
-  Star, Flame, Brain, Users, Target, MessageCircle, Lightbulb,
+  Star, Flame, Brain, Users, Target, MessageCircle, Lightbulb, Sparkles,
 } from "lucide-react";
 import ScannerView from "@/components/ScannerView";
 import ResultsView from "@/components/ResultsView";
