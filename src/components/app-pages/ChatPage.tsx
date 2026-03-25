@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2, Sparkles, MessageSquarePlus } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, MessageSquarePlus, ImagePlus, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; image?: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -18,23 +18,48 @@ const SUGGESTIONS = [
   "What's my environmental impact so far?",
 ];
 
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
+
 const ChatPage = () => {
   const { scanHistory, points, streak } = useUser();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error("Image too large. Maximum 4MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const sendMessage = async (text: string) => {
-    if (!text.trim() || isLoading) return;
-    const userMsg: Msg = { role: "user", content: text.trim() };
+    if ((!text.trim() && !pendingImage) || isLoading) return;
+    const userMsg: Msg = {
+      role: "user",
+      content: text.trim() || (pendingImage ? "What's in this image? How should I recycle these items?" : ""),
+      image: pendingImage || undefined,
+    };
+    const currentImage = pendingImage;
     const allMessages = [...messages, userMsg];
     setMessages(allMessages);
     setInput("");
+    setPendingImage(null);
     setIsLoading(true);
 
     let assistantSoFar = "";
@@ -49,7 +74,6 @@ const ChatPage = () => {
       });
     };
 
-    // Build user context from scan history
     const recentScans = scanHistory
       .slice(0, 10)
       .flatMap((r) => r.items.map((i) => i.displayName));
@@ -62,23 +86,21 @@ const ChatPage = () => {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: allMessages,
+          messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
           userContext: {
             points,
             streak,
             recentScans,
             totalScans: scanHistory.length,
           },
+          ...(currentImage ? { image: currentImage } : {}),
         }),
       });
 
       if (!resp.ok || !resp.body) {
         const errorData = await resp.json().catch(() => ({}));
-        if (resp.status === 429) {
-          toast.error("Rate limited — please wait a moment");
-        } else if (resp.status === 402) {
-          toast.error("AI credits exhausted");
-        }
+        if (resp.status === 429) toast.error("Rate limited — please wait a moment");
+        else if (resp.status === 402) toast.error("AI credits exhausted");
         throw new Error(errorData.error || "Failed to connect to AI");
       }
 
@@ -112,7 +134,6 @@ const ChatPage = () => {
         }
       }
 
-      // Final flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -139,10 +160,20 @@ const ChatPage = () => {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
+    setPendingImage(null);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
+
       {/* Header */}
       <div className="px-6 pt-6 pb-3 flex items-center justify-between">
         <div>
@@ -174,7 +205,7 @@ const ChatPage = () => {
             <p className="text-sm text-muted-foreground text-center max-w-[260px]">
               {scanHistory.length > 0
                 ? `I know your recycling history! Ask me for personalized advice based on your ${scanHistory.length} scans.`
-                : "Hi! I'm your AI recycling assistant. Ask me anything about waste sorting and sustainability."}
+                : "Hi! I'm your AI recycling assistant. Ask me anything or send a photo for instant analysis."}
             </p>
             <div className="flex flex-wrap gap-2 justify-center max-w-sm">
               {SUGGESTIONS.slice(0, scanHistory.length > 0 ? 6 : 4).map((s) => (
@@ -210,6 +241,16 @@ const ChatPage = () => {
                     : "bg-card border border-border rounded-bl-lg"
                 }`}
               >
+                {/* Image thumbnail in user message */}
+                {msg.image && (
+                  <div className="mb-2 rounded-xl overflow-hidden border border-border/30">
+                    <img
+                      src={msg.image}
+                      alt="Attached"
+                      className="w-full max-h-40 object-cover"
+                    />
+                  </div>
+                )}
                 {msg.role === "assistant" ? (
                   <div className="prose prose-sm max-w-none dark:prose-invert [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:mb-2 [&>ol]:mb-2">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -239,6 +280,32 @@ const ChatPage = () => {
         )}
       </div>
 
+      {/* Pending image preview */}
+      <AnimatePresence>
+        {pendingImage && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-6 overflow-hidden"
+          >
+            <div className="relative inline-block mb-2">
+              <img
+                src={pendingImage}
+                alt="Pending attachment"
+                className="h-20 rounded-xl border border-border object-cover"
+              />
+              <button
+                onClick={() => setPendingImage(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input */}
       <div className="px-6 py-4 border-t border-border bg-background">
         <form
@@ -248,17 +315,26 @@ const ChatPage = () => {
           }}
           className="flex gap-2"
         >
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center shrink-0 disabled:opacity-40 active-press hover:bg-secondary/80 transition-colors"
+            title="Attach image"
+          >
+            <ImagePlus className="w-5 h-5 text-muted-foreground" />
+          </button>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about recycling..."
+            placeholder={pendingImage ? "Describe what you see..." : "Ask about recycling..."}
             disabled={isLoading}
             className="flex-1 px-4 py-3 rounded-2xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={(!input.trim() && !pendingImage) || isLoading}
             className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 active-press"
           >
             <Send className="w-5 h-5" />
