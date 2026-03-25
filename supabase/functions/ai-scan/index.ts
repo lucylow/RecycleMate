@@ -77,10 +77,12 @@ For each item you MUST provide:
 - **binColor**: Map to UI colors — "primary" (recycling/blue), "foreground" (garbage/black), "success" (compost/green), "warning" (hazardous/drop-off/orange)
 - **ecoTip**: A surprising, memorable eco-fact about this material (e.g., "Recycling one aluminum can saves enough energy to run a TV for 3 hours!")
 - **dropoff**: Only if bin is "Hazardous" or "Drop-off" — suggest a generic facility type (e.g., "Local household hazardous waste facility")
+- **ecoAlternative**: For NON-recyclable or harmful items (Garbage, Hazardous), suggest an eco-friendly alternative product/approach. For recyclable items, set to null. Examples: "Switch to reusable silicone food wraps instead of plastic wrap", "Try bamboo straws or a metal straw"
 
 Quality standards:
 - Instructions must be specific: mention cap removal, rinsing, label removal, flattening where appropriate
 - Eco-tips should be factual, surprising, and motivating
+- Eco-alternatives should be practical, affordable, and specific — not generic "buy less"
 - If confidence is low (<80%), mention the item may need visual verification`,
           },
           {
@@ -109,6 +111,7 @@ Quality standards:
                         binColor: { type: "string", enum: ["primary", "foreground", "success", "warning"] },
                         ecoTip: { type: "string" },
                         dropoff: { type: "string" },
+                        ecoAlternative: { type: "string" },
                       },
                       required: ["item", "material", "instruction", "bin", "binColor", "ecoTip"],
                       additionalProperties: false,

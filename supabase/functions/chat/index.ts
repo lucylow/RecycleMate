@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const TIMEOUT_MS = 30_000;
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 
 function errorResponse(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -45,7 +46,7 @@ serve(async (req) => {
       return errorResponse("Invalid JSON body", 400);
     }
 
-    const { messages, userContext } = body;
+    const { messages, userContext, image } = body;
     if (!Array.isArray(messages) || messages.length === 0) {
       return errorResponse("'messages' must be a non-empty array", 400);
     }
@@ -60,6 +61,16 @@ serve(async (req) => {
       if (typeof msg.content === "string" && msg.content.length > 10_000) {
         return errorResponse("Message content too long. Maximum 10,000 characters.", 400);
       }
+    }
+
+    // Validate optional image attachment
+    let imageBase64: string | null = null;
+    if (image && typeof image === "string") {
+      const cleaned = image.replace(/^data:image\/[a-z+]+;base64,/, "");
+      if (cleaned.length > MAX_IMAGE_SIZE) {
+        return errorResponse("Image too large. Maximum 4MB.", 413);
+      }
+      imageBase64 = cleaned;
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -82,26 +93,21 @@ serve(async (req) => {
       }
     }
 
-    const response = await fetchWithTimeout(GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are **RecycleMate AI** — a friendly, expert recycling and sustainability assistant built into the RecycleMate app.
+    // Build the last user message — possibly multimodal with image
+    const apiMessages = [
+      {
+        role: "system",
+        content: `You are **RecycleMate AI** — a friendly, expert recycling and sustainability assistant built into the RecycleMate app.
 
 Your capabilities:
 - Identify how to properly dispose of any item (plastic types, metals, glass, organics, e-waste, hazardous materials)
 - Explain recycling processes and why certain materials can/cannot be recycled
+- **Analyze images**: When a user sends a photo, identify all visible waste/recyclable items and provide disposal guidance
 - Provide location-aware advice (when the user mentions their area)
 - Share surprising eco-facts and practical sustainability tips
 - Debunk common recycling myths
 - Analyze the user's scan history to give personalized advice
+- Suggest eco-friendly alternatives for non-recyclable items
 
 Guidelines:
 - Keep answers concise: 2-4 short paragraphs max
@@ -111,10 +117,40 @@ Guidelines:
 - Always be encouraging — celebrate good recycling habits
 - When discussing materials, mention the resin code (e.g., PET #1, HDPE #2) when relevant
 - If the user has scan history, reference it to make answers personal
+- When analyzing images, identify each item, its material, and give specific disposal instructions
 - Format with markdown for readability${contextBlock}`,
-          },
-          ...messages,
-        ],
+      },
+    ];
+
+    // Process conversation messages — inject image into the last user message if provided
+    const processedMessages = messages.map((msg: any, idx: number) => {
+      // Only attach image to the last user message
+      if (imageBase64 && idx === messages.length - 1 && msg.role === "user") {
+        return {
+          role: "user",
+          content: [
+            { type: "text", text: msg.content },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+          ],
+        };
+      }
+      return { role: msg.role, content: msg.content };
+    });
+
+    apiMessages.push(...processedMessages);
+
+    // Use a vision-capable model when image is attached
+    const model = imageBase64 ? "google/gemini-3-flash-preview" : "google/gemini-3-flash-preview";
+
+    const response = await fetchWithTimeout(GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: apiMessages,
         stream: true,
       }),
     }, TIMEOUT_MS);
@@ -124,7 +160,7 @@ Guidelines:
       return handleGatewayError(response.status, body);
     }
 
-    console.log(`[chat] Stream started in ${Date.now() - start}ms, ${messages.length} messages`);
+    console.log(`[chat] Stream started in ${Date.now() - start}ms, ${messages.length} msgs${imageBase64 ? " +image" : ""}`);
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },

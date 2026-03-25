@@ -8,6 +8,7 @@ export interface DisposalInstruction {
   binColor: string;
   ecoTip?: string;
   dropoff?: string;
+  ecoAlternative?: string;
 }
 
 const AI_SCAN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-scan`;
