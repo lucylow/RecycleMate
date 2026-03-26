@@ -40,6 +40,20 @@ const ScannerView = ({ onDetection }: ScannerViewProps) => {
   const viewfinderRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+    setIsVideoReady(false);
+    setTorchOn(false);
+    setPreviewImage(null);
+    setDetections([]);
+  }, []);
+
   const startCamera = useCallback(async () => {
     try {
       stopCamera();
@@ -60,20 +74,6 @@ const ScannerView = ({ onDetection }: ScannerViewProps) => {
       toast.error("Camera access failed. You can still upload images.");
     }
   }, [stopCamera]);
-
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.srcObject = null;
-    }
-    setCameraActive(false);
-    setIsVideoReady(false);
-    setTorchOn(false);
-    setPreviewImage(null);
-    setDetections([]);
-  }, []);
 
   useEffect(() => {
     return () => stopCamera();
