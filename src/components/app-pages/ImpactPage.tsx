@@ -49,12 +49,23 @@ const GRADE_COLORS: Record<string, string> = {
   D: "text-destructive", F: "text-destructive",
 };
 
-const SDG_TARGETS = [
-  { sdg: "SDG 4.7", label: "Education", icon: <GraduationCap className="w-3.5 h-3.5" />, desc: "Sustainability literacy through quizzes & micro-learning" },
-  { sdg: "SDG 6", label: "Clean Water", icon: <Droplets className="w-3.5 h-3.5" />, desc: "Water saved by recycling materials instead of producing new" },
-  { sdg: "SDG 12.5", label: "Waste Reduction", icon: <Recycle className="w-3.5 h-3.5" />, desc: "Correctly sorted items reduce contamination & landfill" },
-  { sdg: "SDG 13", label: "Climate Action", icon: <Leaf className="w-3.5 h-3.5" />, desc: "CO₂ emissions avoided through proper recycling" },
-  { sdg: "SDG 15", label: "Life on Land", icon: <TreePine className="w-3.5 h-3.5" />, desc: "Trees preserved by recycling paper & cardboard" },
+interface SDGTarget {
+  sdg: string;
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+  metric: (items: number, co2: number, water: number) => string;
+  progress: (items: number) => number; // 0-100
+}
+
+const getSDGTargets = (): SDGTarget[] => [
+  { sdg: "SDG 4.7", label: "Education", icon: <GraduationCap className="w-3.5 h-3.5" />, desc: "Sustainability literacy through quizzes & micro-learning", metric: (items) => `${items} items learned about`, progress: (items) => Math.min((items / 50) * 100, 100) },
+  { sdg: "SDG 6", label: "Clean Water", icon: <Droplets className="w-3.5 h-3.5" />, desc: "Water saved by recycling materials instead of producing new", metric: (_, __, water) => `${water} L water saved`, progress: (items) => Math.min((items * WATER_PER_ITEM / 500) * 100, 100) },
+  { sdg: "SDG 11", label: "Sustainable Cities", icon: <Globe className="w-3.5 h-3.5" />, desc: "Urban waste contamination reduced through correct sorting", metric: (items) => `${items} items correctly sorted`, progress: (items) => Math.min((items / 100) * 100, 100) },
+  { sdg: "SDG 12.5", label: "Waste Reduction", icon: <Recycle className="w-3.5 h-3.5" />, desc: "Correctly sorted items reduce contamination & landfill", metric: (items) => `${items} items diverted from landfill`, progress: (items) => Math.min((items / 200) * 100, 100) },
+  { sdg: "SDG 13", label: "Climate Action", icon: <Leaf className="w-3.5 h-3.5" />, desc: "CO₂ emissions avoided through proper recycling", metric: (_, co2) => `${co2} kg CO₂ avoided`, progress: (items) => Math.min((items * CO2_PER_ITEM / 10) * 100, 100) },
+  { sdg: "SDG 14", label: "Life Below Water", icon: <Droplets className="w-3.5 h-3.5" />, desc: "Less plastic entering oceans through proper recycling", metric: (items) => `${items} plastic items diverted`, progress: (items) => Math.min((items / 75) * 100, 100) },
+  { sdg: "SDG 15", label: "Life on Land", icon: <TreePine className="w-3.5 h-3.5" />, desc: "Trees preserved by recycling paper & cardboard", metric: (items) => `${(items * TREES_PER_ITEM).toFixed(2)} trees equiv. saved`, progress: (items) => Math.min((items * TREES_PER_ITEM / 1) * 100, 100) },
 ];
 
 // --- Sub-components ---
@@ -580,32 +591,50 @@ const ImpactPage = () => {
         )}
       </motion.div>
 
-      {/* SDG Alignment */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18 }}
         className="p-5 rounded-3xl border border-border bg-card shadow-soft"
       >
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-1">
           <Globe className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">UN SDG Alignment</h3>
+          <h3 className="text-sm font-semibold">Your SDG Contributions</h3>
         </div>
-        <div className="space-y-2.5">
-          {SDG_TARGETS.map((sdg) => (
-            <div key={sdg.sdg} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-secondary/40">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary mt-0.5">
-                {sdg.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-primary font-medium">{sdg.sdg}</span>
-                  <span className="text-xs font-medium text-foreground">{sdg.label}</span>
+        <p className="text-[11px] text-muted-foreground mb-4">Track your personal progress towards UN Sustainable Development Goals</p>
+        <div className="space-y-3">
+          {getSDGTargets().map((sdg) => {
+            const prog = sdg.progress(totalItems);
+            const metricText = sdg.metric(totalItems, parseFloat(co2Saved), waterSaved);
+            return (
+              <div key={sdg.sdg} className="p-3 rounded-xl bg-secondary/40">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+                    {sdg.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] text-primary font-medium">{sdg.sdg}</span>
+                        <span className="text-xs font-medium text-foreground">{sdg.label}</span>
+                      </div>
+                      <span className="font-mono text-[10px] text-muted-foreground">{prog.toFixed(0)}%</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-snug">{sdg.desc}</p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{sdg.desc}</p>
+                <div className="h-1.5 bg-background rounded-full overflow-hidden mb-1">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${prog}%` }}
+                    transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
+                    className="h-full bg-primary rounded-full"
+                  />
+                </div>
+                <p className="text-[10px] text-primary font-medium">{metricText}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
 
