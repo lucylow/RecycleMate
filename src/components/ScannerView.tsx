@@ -47,6 +47,11 @@ const ScannerView = ({ onDetection }: ScannerViewProps) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn("Auto-play failed, waiting for user interaction:", playErr);
+        }
         setCameraActive(true);
         setShowHint(true);
         setTimeout(() => setShowHint(false), 4000);
