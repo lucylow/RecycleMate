@@ -591,18 +591,6 @@ const ImpactPage = () => {
         )}
       </motion.div>
 
-      {/* SDG Alignment */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18 }}
-        className="p-5 rounded-3xl border border-border bg-card shadow-soft"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Globe className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold">UN SDG Alignment</h3>
-        </div>
-      {/* SDG Alignment — Data-Driven */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
