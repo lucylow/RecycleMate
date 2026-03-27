@@ -107,7 +107,7 @@ const AppScreen = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="absolute left-0 top-0 bottom-0 z-50 w-72 bg-background border-r border-border flex flex-col shadow-elevated"
+              className="absolute left-0 top-0 bottom-0 z-50 w-[min(18rem,85vw)] bg-background border-r border-border flex flex-col shadow-elevated"
             >
               {/* Drawer header */}
               <div className="p-6 bg-primary rounded-br-3xl">
