@@ -1,49 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Star, Clock, Trophy, Target, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Clock, Leaf } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import EcoAvatar from "@/components/EcoAvatar";
 import { getDailyNudge } from "@/services/featherless";
+import StatsRow from "@/components/profile/StatsRow";
+import LevelProgress from "@/components/profile/LevelProgress";
+import BadgeGrid from "@/components/profile/BadgeGrid";
+import DailyChallengeCard from "@/components/profile/DailyChallengeCard";
+import StreakShield from "@/components/profile/StreakShield";
+import { getImpactEquivalencies, type UserGamificationStats } from "@/services/gamificationEngine";
 
 interface ProfileViewProps {
   onBack: () => void;
 }
 
-const BADGES: Record<string, { name: string; description: string; icon: string; threshold: number }> = {
-  first_scan: { name: "First Scan", description: "Complete your first scan", icon: "🎯", threshold: 10 },
-  eco_starter: { name: "Eco Starter", description: "Earn 50 points", icon: "🌱", threshold: 50 },
-  planet_protector: { name: "Planet Protector", description: "Earn 100 points", icon: "🛡️", threshold: 100 },
-  sorting_master: { name: "Sorting Master", description: "Earn 500 points", icon: "🏆", threshold: 500 },
-};
-
-const NEXT_LEVEL = 500;
-
-const ProgressBar = ({ value, max, color = "bg-primary" }: { value: number; max: number; color?: string }) => {
-  const pct = Math.min((value / max) * 100, 100);
-  return (
-    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
-        className={`h-full rounded-full ${color}`}
-      />
-    </div>
-  );
-};
-
 const ProfileView = ({ onBack }: ProfileViewProps) => {
   const { points, streak, achievements, scanHistory } = useUser();
   const totalScans = scanHistory.length;
+  const totalItems = scanHistory.reduce((s, r) => s + r.items.length, 0);
   const [nudge, setNudge] = useState<string | null>(null);
+
+  const stats: UserGamificationStats = useMemo(() => ({
+    points,
+    streak,
+    totalScans,
+    totalItems,
+    uniqueMaterials: new Set(scanHistory.flatMap((r) => r.items.map((i) => i.category || i.label))).size,
+    challengesCompleted: (() => {
+      try { return JSON.parse(localStorage.getItem("recyclemate_claimed_challenges") || "[]").length; }
+      catch { return 0; }
+    })(),
+  }), [points, streak, totalScans, totalItems, scanHistory]);
+
+  const impact = useMemo(() => getImpactEquivalencies(totalItems), [totalItems]);
 
   useEffect(() => {
     getDailyNudge({
       points,
       streak,
       totalScans,
-      recentItems: scanHistory.slice(0, 5).flatMap(r => r.items.map(i => i.displayName)),
-    }).then(r => setNudge(r.text)).catch(() => {});
+      recentItems: scanHistory.slice(0, 5).flatMap((r) => r.items.map((i) => i.displayName)),
+    }).then((r) => setNudge(r.text)).catch(() => {});
   }, []);
 
   return (
@@ -57,8 +55,8 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
         <div className="w-9 sm:w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-6">
-        {/* Daily AI Nudge */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-5">
+        {/* AI Nudge */}
         {nudge && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -69,124 +67,78 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
             <p className="text-sm text-foreground font-medium">{nudge}</p>
           </motion.div>
         )}
-        {/* Eco Avatar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-center py-2"
-        >
+
+        {/* Avatar */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center py-2">
           <EcoAvatar points={points} size={90} />
         </motion.div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {[
-            { icon: <Star className="w-5 h-5 text-primary" />, value: points, label: "Points", color: "text-primary" },
-            { icon: <Flame className="w-5 h-5 text-warning" />, value: streak, label: "Streak", color: "text-warning" },
-            { icon: <Target className="w-5 h-5 text-success" />, value: totalScans, label: "Scans", color: "text-success" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="p-3 sm:p-4 rounded-2xl border border-border bg-card shadow-soft text-center"
-            >
-              <div className="mx-auto mb-2">{stat.icon}</div>
-              <p className={`font-mono text-xl sm:text-2xl font-semibold tracking-tighter ${stat.color}`}>{stat.value}</p>
-              <p className="text-label text-muted-foreground mt-1">{stat.label}</p>
-            </motion.div>
-          ))}
-        </div>
+        {/* Stats */}
+        <StatsRow points={points} streak={streak} totalScans={totalScans} />
 
-        {/* Level progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="p-5 rounded-2xl border border-border bg-card shadow-soft"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">Level Progress</span>
+        {/* Level */}
+        <LevelProgress points={points} />
+
+        {/* Streak Shield */}
+        <StreakShield />
+
+        {/* Daily Challenge */}
+        <DailyChallengeCard />
+
+        {/* Impact mini-summary */}
+        {totalItems > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="p-4 rounded-2xl bg-success/5 border border-success/20"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Leaf className="w-4 h-4 text-success" />
+              <span className="text-sm font-semibold text-success">Your Impact</span>
             </div>
-            <span className="font-mono text-xs text-muted-foreground">{points} / {NEXT_LEVEL}</span>
-          </div>
-          <ProgressBar value={points} max={NEXT_LEVEL} />
-          <p className="text-xs text-muted-foreground mt-2">
-            {NEXT_LEVEL - points > 0 ? `${NEXT_LEVEL - points} points to next level` : "Level complete! 🎉"}
-          </p>
-        </motion.div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: `${impact.co2Kg}kg`, label: "CO₂ saved" },
+                { value: `${impact.treesEquiv}`, label: "Trees equiv." },
+                { value: `${impact.showers}`, label: "Showers saved" },
+                { value: `${impact.phoneCharges}`, label: "Phone charges" },
+              ].map((m) => (
+                <div key={m.label} className="text-center">
+                  <p className="font-mono text-lg font-semibold text-success">{m.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-        {/* Achievements */}
-        <div>
-          <h3 className="text-label text-muted-foreground mb-4">Achievements</h3>
-          <div className="space-y-3">
-            {Object.entries(BADGES).map(([key, badge], i) => {
-              const unlocked = achievements.includes(key);
-              const progress = Math.min(points / badge.threshold, 1);
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + i * 0.05 }}
-                  className={`p-4 rounded-2xl border flex items-center gap-4 ${
-                    unlocked ? "border-primary/30 bg-primary/5" : "border-border bg-card"
-                  }`}
-                >
-                  <span className={`text-2xl ${!unlocked && "grayscale opacity-40"}`}>{badge.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className={`font-semibold text-sm ${!unlocked && "text-muted-foreground"}`}>{badge.name}</p>
-                      {unlocked && (
-                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">UNLOCKED</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
-                    <ProgressBar
-                      value={points}
-                      max={badge.threshold}
-                      color={unlocked ? "bg-primary" : "bg-muted-foreground/30"}
-                    />
-                    <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                      {Math.min(points, badge.threshold)} / {badge.threshold}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Badges */}
+        <BadgeGrid unlockedBadges={achievements} stats={stats} />
 
-        {/* Scan history */}
+        {/* Recent Scans */}
         <div>
-          <h3 className="text-label text-muted-foreground mb-4">Recent Scans</h3>
+          <h3 className="text-label text-muted-foreground mb-3">Recent Scans</h3>
           {scanHistory.length === 0 ? (
-            <div className="text-center py-10">
-              <Target className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground text-sm">No scans yet</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Start scanning to build your history</p>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground text-sm">No scans yet — start scanning!</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {scanHistory.slice(0, 10).map((record, i) => (
+              {scanHistory.slice(0, 5).map((record, i) => (
                 <motion.div
                   key={record.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.03 }}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Clock className="w-4 h-4 text-primary" />
-                  </div>
+                  <Clock className="w-4 h-4 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {record.items.map(i => i.displayName).join(", ")}
+                      {record.items.map((i) => i.displayName).join(", ")}
                     </p>
-                    <p className="font-mono text-xs text-muted-foreground">
+                    <p className="font-mono text-[10px] text-muted-foreground">
                       {record.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
