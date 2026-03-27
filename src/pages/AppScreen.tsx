@@ -246,7 +246,7 @@ const AppScreen = () => {
           <span className="font-semibold tracking-tight text-sm">RecycleMate</span>
         </div>
         <span className="text-label text-muted-foreground w-10 text-right text-[10px]">
-          {view === "scanner" ? "SCAN" : view === "results" ? "RESULT" : view.toUpperCase().slice(0, 6)}
+          {view === "scanner" ? "SCAN" : view === "results" ? "RESULT" : view === "chat" ? "AI" : view.toUpperCase().slice(0, 6)}
         </span>
       </div>
 
