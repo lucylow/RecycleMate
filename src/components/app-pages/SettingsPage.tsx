@@ -204,13 +204,13 @@ const SettingsPage = () => {
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {model.vision && (
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-500/10 text-blue-500">
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-accent text-accent-foreground">
                         <Eye className="w-2.5 h-2.5" />
                         VIS
                       </span>
                     )}
                     {model.tools && (
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-purple-500/10 text-purple-500">
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-secondary text-primary">
                         <Wrench className="w-2.5 h-2.5" />
                         FN
                       </span>
