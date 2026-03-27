@@ -240,7 +240,7 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
                 className={`rounded-3xl border bg-card shadow-soft ${style.border} overflow-hidden`}
               >
                 {/* Main content */}
-                <div className="p-5">
+                <div className="p-3.5 sm:p-5">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{catIcon}</span>
