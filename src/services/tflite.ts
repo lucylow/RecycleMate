@@ -1,5 +1,6 @@
 import type { DetectedItem } from "@/context/UserContext";
 import { smartDetectCascade } from "@/services/featherless";
+import { validateImageInput, withTimeout } from "@/services/resilience";
 
 const AI_VISION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-vision`;
 
