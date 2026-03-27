@@ -37,12 +37,12 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
   return (
     <div className="flex-1 flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-4">
-        <button onClick={onBack} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
+      <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+        <button onClick={onBack} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
         </button>
         <span className="text-label text-muted-foreground">Profile</span>
-        <div className="w-10" />
+        <div className="w-9 sm:w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
