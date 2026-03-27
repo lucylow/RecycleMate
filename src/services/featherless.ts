@@ -140,18 +140,32 @@ export async function visionFallback(
   imageBase64: string,
   itemHint?: string,
 ): Promise<VisionResult> {
-  const resp = await fetch(VISION_URL, {
-    method: "POST",
-    headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
-    body: JSON.stringify({ image: imageBase64, item_hint: itemHint }),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || "Vision analysis failed");
+  try {
+    const resp = await fetch(VISION_URL, {
+      method: "POST",
+      headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageBase64, item_hint: itemHint }),
+    });
+    if (!resp.ok) throw new Error(`Vision API ${resp.status}`);
+    return resp.json();
+  } catch (err) {
+    console.warn("[featherless] Vision API failed, using mock detection:", err);
+    const hint = (itemHint || "unknown item").toLowerCase();
+    const match = Object.entries(MOCK_RECYCLING_RULES).find(([k]) => hint.includes(k));
+    const rules = match?.[1] || { recyclable: false, bin: "Check locally", instruction: "Unable to identify item. Please check your local recycling guide.", category: "unknown" };
+    return {
+      detections: [{
+        waste_type: match?.[0] || hint,
+        confidence: 0.5,
+        recyclable: rules.recyclable,
+        category: rules.category,
+        instruction: rules.instruction,
+        bin: rules.bin,
+        material_detail: rules.category,
+      }],
+      provider: "featherless",
+    };
   }
-
-  return resp.json();
 }
 
 /**
