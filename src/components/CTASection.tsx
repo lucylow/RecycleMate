@@ -1,8 +1,9 @@
+import React from "react";
 import { motion } from "framer-motion";
 
-const CTASection = () => {
+const CTASection = React.forwardRef<HTMLElement>((_, ref) => {
   return (
-    <section className="py-24 px-6 bg-secondary/50">
+    <section ref={ref} className="py-24 px-6 bg-secondary/50">
       <div className="max-w-3xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -29,6 +30,8 @@ const CTASection = () => {
       </div>
     </section>
   );
-};
+});
+
+CTASection.displayName = "CTASection";
 
 export default CTASection;
