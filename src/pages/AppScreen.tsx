@@ -216,17 +216,27 @@ const AppScreen = () => {
       </div>
 
       {/* Content */}
-      <ErrorBoundary fallbackMessage="This section encountered an error. Try navigating back or refreshing.">
-        <div className="flex-1 flex flex-col px-2 sm:px-4 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] overflow-hidden">
-          <AnimatePresence mode="wait">
-            {view === "scanner" && <ScannerView key="scanner" onDetection={handleDetection} />}
-            {view === "results" && (
+      <div className="flex-1 flex flex-col px-2 sm:px-4 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] overflow-hidden">
+        <AnimatePresence mode="wait">
+          {view === "scanner" && (
+            <ErrorBoundary key="eb-scanner" fallbackMessage="Camera scanner encountered an error. Try refreshing or upload an image instead.">
+              <ScannerView key="scanner" onDetection={handleDetection} />
+            </ErrorBoundary>
+          )}
+          {view === "results" && (
+            <ErrorBoundary key="eb-results" fallbackMessage="Could not display results. Try scanning again.">
               <ResultsView key="results" detections={detections} onBack={() => setView("scanner")} onNavigate={(page) => setView(page as AppView)} />
-            )}
-            {view === "profile" && <ProfileView key="profile" onBack={() => setView("scanner")} />}
-            {["history", "impact", "settings", "help", "about", "quiz", "community", "challenges", "tips"].map(
-              (page) =>
-                view === page && (
+            </ErrorBoundary>
+          )}
+          {view === "profile" && (
+            <ErrorBoundary key="eb-profile" fallbackMessage="Profile could not load. Please try again.">
+              <ProfileView key="profile" onBack={() => setView("scanner")} />
+            </ErrorBoundary>
+          )}
+          {["history", "impact", "settings", "help", "about", "quiz", "community", "challenges", "tips"].map(
+            (page) =>
+              view === page && (
+                <ErrorBoundary key={`eb-${page}`} fallbackMessage={`The ${page} page encountered an error. Please try again.`}>
                   <motion.div
                     key={page}
                     initial={{ opacity: 0, x: 20 }}
@@ -245,9 +255,11 @@ const AppScreen = () => {
                     {page === "challenges" && <ChallengesPage />}
                     {page === "tips" && <TipsPage />}
                   </motion.div>
-                )
-            )}
-            {view === "chat" && (
+                </ErrorBoundary>
+              )
+          )}
+          {view === "chat" && (
+            <ErrorBoundary key="eb-chat" fallbackMessage="AI Chat encountered an error. Please try again.">
               <motion.div
                 key="chat"
                 initial={{ opacity: 0, y: 20 }}
@@ -258,10 +270,10 @@ const AppScreen = () => {
               >
                 <ChatPage />
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </ErrorBoundary>
+            </ErrorBoundary>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Bottom tab bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around">

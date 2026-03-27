@@ -1,10 +1,7 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Star, Clock, Trophy, Target, LogOut, LogIn } from "lucide-react";
+import { ArrowLeft, Flame, Star, Clock, Trophy, Target } from "lucide-react";
 import { useUser } from "@/context/UserContext";
-import { useAuth } from "@/context/AuthContext";
 import EcoAvatar from "@/components/EcoAvatar";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 interface ProfileViewProps {
   onBack: () => void;
@@ -34,16 +31,8 @@ const ProgressBar = ({ value, max, color = "bg-primary" }: { value: number; max:
 };
 
 const ProfileView = ({ onBack }: ProfileViewProps) => {
-  const { points, streak, achievements, scanHistory, displayName } = useUser();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { points, streak, achievements, scanHistory } = useUser();
   const totalScans = scanHistory.length;
-
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success("Signed out");
-    navigate("/");
-  };
 
   return (
     <div className="flex-1 flex flex-col bg-background overflow-hidden">
@@ -52,16 +41,8 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
         <button onClick={onBack} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
           <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
         </button>
-        <span className="text-label text-muted-foreground">{displayName || "Profile"}</span>
-        {user ? (
-          <button onClick={handleSignOut} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-destructive/10 flex items-center justify-center active-press">
-            <LogOut className="w-4 h-4 text-destructive" />
-          </button>
-        ) : (
-          <button onClick={() => navigate("/auth")} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center active-press">
-            <LogIn className="w-4 h-4 text-primary" />
-          </button>
-        )}
+        <span className="text-label text-muted-foreground">Profile</span>
+        <div className="w-9 sm:w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-6">

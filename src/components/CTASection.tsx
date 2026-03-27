@@ -1,10 +1,9 @@
+import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 
-const CTASection = () => {
-  const navigate = useNavigate();
+const CTASection = React.forwardRef<HTMLElement>((_, ref) => {
   return (
-    <section className="py-24 px-6 bg-secondary/50">
+    <section ref={ref} className="py-24 px-6 bg-secondary/50">
       <div className="max-w-3xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -20,17 +19,19 @@ const CTASection = () => {
             Be part of the solution to the 2 billion ton waste crisis.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button onClick={() => navigate("/auth")} className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium text-base active-press shadow-soft">
-              Get Started Free
+            <button className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium text-base active-press shadow-soft">
+              Get Early Access
             </button>
-            <button onClick={() => navigate("/app")} className="px-8 py-4 bg-foreground text-background rounded-2xl font-medium text-base active-press">
-              Try as Guest
+            <button className="px-8 py-4 bg-foreground text-background rounded-2xl font-medium text-base active-press">
+              Read the Research
             </button>
           </div>
         </motion.div>
       </div>
     </section>
   );
-};
+});
+
+CTASection.displayName = "CTASection";
 
 export default CTASection;
