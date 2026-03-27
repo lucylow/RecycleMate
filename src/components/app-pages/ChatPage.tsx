@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Loader2, Sparkles, MessageSquarePlus, ImagePlus, X } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles, MessageSquarePlus, ImagePlus, X, Wrench } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
