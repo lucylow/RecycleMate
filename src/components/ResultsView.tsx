@@ -390,7 +390,7 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
 
       {/* Confirm button */}
       {!loading && !error && (
-        <div className="px-6 pb-6 pt-2">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
           {confirmed ? (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

@@ -148,7 +148,7 @@ const QuizPage = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-display">Recycling Quiz</h1>

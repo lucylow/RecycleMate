@@ -109,13 +109,13 @@
   .text-display {
     font-weight: 600;
     letter-spacing: -0.04em;
-    font-size: clamp(1.5rem, 5vw, 2.25rem);
+    font-size: clamp(1.25rem, 4.5vw, 2.25rem);
     line-height: 1.1;
   }
   .text-display-xl {
     font-weight: 600;
     letter-spacing: -0.04em;
-    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-size: clamp(1.75rem, 5.5vw, 3.5rem);
     line-height: 1.05;
   }
   .text-label {
@@ -123,7 +123,7 @@
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
   }
   .shadow-soft {
     box-shadow: var(--shadow-soft);
@@ -134,5 +134,17 @@
   .active-press {
     @apply active:scale-[0.97] transition-transform;
     transition-duration: 20ms;
+  }
+  /* Prevent horizontal overflow on mobile */
+  .mobile-safe {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+/* Global mobile fixes */
+@media (max-width: 420px) {
+  .recharts-wrapper {
+    font-size: 10px;
   }
 }

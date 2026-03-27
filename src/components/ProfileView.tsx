@@ -70,7 +70,7 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
               className="p-3 sm:p-4 rounded-2xl border border-border bg-card shadow-soft text-center"
             >
               <div className="mx-auto mb-2">{stat.icon}</div>
-              <p className={`font-mono text-2xl font-semibold tracking-tighter ${stat.color}`}>{stat.value}</p>
+              <p className={`font-mono text-xl sm:text-2xl font-semibold tracking-tighter ${stat.color}`}>{stat.value}</p>
               <p className="text-label text-muted-foreground mt-1">{stat.label}</p>
             </motion.div>
           ))}

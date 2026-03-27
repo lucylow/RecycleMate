@@ -252,7 +252,7 @@ const AppScreen = () => {
 
       {/* Content */}
       <ErrorBoundary fallbackMessage="This section encountered an error. Try navigating back or refreshing.">
-        <div className="flex-1 flex flex-col px-3 sm:px-4 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] overflow-hidden">
+        <div className="flex-1 flex flex-col px-2 sm:px-4 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] overflow-hidden">
           <AnimatePresence mode="wait">
             {view === "scanner" && <ScannerView key="scanner" onDetection={handleDetection} />}
             {view === "results" && (
