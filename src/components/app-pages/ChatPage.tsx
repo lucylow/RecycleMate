@@ -164,7 +164,7 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+    <div className="flex-1 flex flex-col overflow-hidden -mx-2 sm:-mx-6 -mt-2">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
