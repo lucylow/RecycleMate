@@ -246,7 +246,7 @@ const AppScreen = () => {
           <span className="font-semibold tracking-tight text-sm">RecycleMate</span>
         </div>
         <span className="text-label text-muted-foreground w-10 text-right text-[10px]">
-          {view === "scanner" ? "SCAN" : view === "results" ? "RESULT" : view.toUpperCase().slice(0, 6)}
+          {view === "scanner" ? "SCAN" : view === "results" ? "RESULT" : view === "chat" ? "AI" : view.toUpperCase().slice(0, 6)}
         </span>
       </div>
 
@@ -259,54 +259,39 @@ const AppScreen = () => {
               <ResultsView key="results" detections={detections} onBack={() => setView("scanner")} onNavigate={(page) => setView(page as AppView)} />
             )}
             {view === "profile" && <ProfileView key="profile" onBack={() => setView("scanner")} />}
-            {view === "history" && (
-              <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <HistoryPage />
-              </motion.div>
-            )}
-            {view === "impact" && (
-              <motion.div key="impact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <ImpactPage />
-              </motion.div>
-            )}
-            {view === "settings" && (
-              <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <SettingsPage />
-              </motion.div>
-            )}
-            {view === "help" && (
-              <motion.div key="help" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <HelpPage />
-              </motion.div>
-            )}
-            {view === "about" && (
-              <motion.div key="about" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <AboutPage />
-              </motion.div>
-            )}
-            {view === "quiz" && (
-              <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <QuizPage />
-              </motion.div>
-            )}
-            {view === "community" && (
-              <motion.div key="community" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <CommunityPage />
-              </motion.div>
-            )}
-            {view === "challenges" && (
-              <motion.div key="challenges" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <ChallengesPage />
-              </motion.div>
+            {["history", "impact", "settings", "help", "about", "quiz", "community", "challenges", "tips"].map(
+              (page) =>
+                view === page && (
+                  <motion.div
+                    key={page}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2"
+                  >
+                    {page === "history" && <HistoryPage />}
+                    {page === "impact" && <ImpactPage />}
+                    {page === "settings" && <SettingsPage />}
+                    {page === "help" && <HelpPage />}
+                    {page === "about" && <AboutPage />}
+                    {page === "quiz" && <QuizPage />}
+                    {page === "community" && <CommunityPage />}
+                    {page === "challenges" && <ChallengesPage />}
+                    {page === "tips" && <TipsPage />}
+                  </motion.div>
+                )
             )}
             {view === "chat" && (
-              <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden">
+              <motion.div
+                key="chat"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
                 <ChatPage />
-              </motion.div>
-            )}
-            {view === "tips" && (
-              <motion.div key="tips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
-                <TipsPage />
               </motion.div>
             )}
           </AnimatePresence>
@@ -314,9 +299,11 @@ const AppScreen = () => {
       </ErrorBoundary>
 
       {/* Bottom tab bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-around">
+      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around">
         {[
           { id: "scanner" as const, icon: Scan, label: "Scan" },
+          { id: "chat" as const, icon: MessageCircle, label: "AI Chat" },
+          { id: "impact" as const, icon: Leaf, label: "Impact" },
           { id: "profile" as const, icon: User, label: "Profile" },
         ].map((tab) => {
           const active = view === tab.id || (view === "results" && tab.id === "scanner");
@@ -324,14 +311,16 @@ const AppScreen = () => {
             <button
               key={tab.id}
               onClick={() => navigateTo(tab.id)}
-              className={`flex flex-col items-center gap-1 active-press relative ${active ? "text-primary" : "text-muted-foreground"}`}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl active-press relative transition-colors ${
+                active ? "text-primary bg-primary/8" : "text-muted-foreground"
+              }`}
             >
-              <tab.icon className="w-5 h-5" />
+              <tab.icon className={`w-5 h-5 transition-transform ${active ? "scale-110" : ""}`} />
               <span className="text-[10px] font-medium tracking-wider uppercase">{tab.label}</span>
               {active && (
                 <motion.div
                   layoutId="tab-indicator"
-                  className="absolute -bottom-3 w-8 h-0.5 bg-primary rounded-full"
+                  className="absolute -bottom-2 w-6 h-[3px] bg-primary rounded-full"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}
