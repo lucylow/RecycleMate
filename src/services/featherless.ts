@@ -117,18 +117,18 @@ export async function translateText(
   text: string,
   targetLang: string,
 ): Promise<{ translated: string; lang: string; provider: string }> {
-  const resp = await fetch(TRANSLATE_URL, {
-    method: "POST",
-    headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
-    body: JSON.stringify({ text, targetLang }),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || "Translation failed");
+  try {
+    const resp = await fetch(TRANSLATE_URL, {
+      method: "POST",
+      headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+      body: JSON.stringify({ text, targetLang }),
+    });
+    if (!resp.ok) throw new Error(`Translation API ${resp.status}`);
+    return resp.json();
+  } catch (err) {
+    console.warn("[featherless] Translation failed, returning original:", err);
+    return { translated: text, lang: targetLang, provider: "mock-passthrough" };
   }
-
-  return resp.json();
 }
 
 /**
