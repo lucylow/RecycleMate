@@ -314,9 +314,11 @@ const AppScreen = () => {
       </ErrorBoundary>
 
       {/* Bottom tab bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-around">
+      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around">
         {[
           { id: "scanner" as const, icon: Scan, label: "Scan" },
+          { id: "chat" as const, icon: MessageCircle, label: "AI Chat" },
+          { id: "impact" as const, icon: Leaf, label: "Impact" },
           { id: "profile" as const, icon: User, label: "Profile" },
         ].map((tab) => {
           const active = view === tab.id || (view === "results" && tab.id === "scanner");
@@ -324,14 +326,16 @@ const AppScreen = () => {
             <button
               key={tab.id}
               onClick={() => navigateTo(tab.id)}
-              className={`flex flex-col items-center gap-1 active-press relative ${active ? "text-primary" : "text-muted-foreground"}`}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl active-press relative transition-colors ${
+                active ? "text-primary bg-primary/8" : "text-muted-foreground"
+              }`}
             >
-              <tab.icon className="w-5 h-5" />
+              <tab.icon className={`w-5 h-5 transition-transform ${active ? "scale-110" : ""}`} />
               <span className="text-[10px] font-medium tracking-wider uppercase">{tab.label}</span>
               {active && (
                 <motion.div
                   layoutId="tab-indicator"
-                  className="absolute -bottom-3 w-8 h-0.5 bg-primary rounded-full"
+                  className="absolute -bottom-2 w-6 h-[3px] bg-primary rounded-full"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}
