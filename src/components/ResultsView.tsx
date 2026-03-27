@@ -138,17 +138,17 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
       className="flex-1 flex flex-col bg-background rounded-t-[32px] overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <button onClick={onBack} className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
+      <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-2">
+        <button onClick={onBack} className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-secondary flex items-center justify-center active-press">
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
         </button>
         <div className="text-center">
-          <span className="text-label text-muted-foreground block">
+          <span className="text-label text-muted-foreground block text-[10px] sm:text-xs">
             {detections.length} Item{detections.length > 1 ? "s" : ""} Detected
           </span>
-          <span className="text-[10px] text-primary font-mono">AI VISION v3</span>
+          <span className="text-[9px] sm:text-[10px] text-primary font-mono">AI VISION v3</span>
         </div>
-        <div className="w-10" />
+        <div className="w-9 sm:w-10" />
       </div>
 
       {/* Impact summary banner */}
@@ -204,7 +204,7 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
       )}
 
       {/* Scrollable results */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -240,7 +240,7 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
                 className={`rounded-3xl border bg-card shadow-soft ${style.border} overflow-hidden`}
               >
                 {/* Main content */}
-                <div className="p-5">
+                <div className="p-3.5 sm:p-5">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{catIcon}</span>
@@ -390,7 +390,7 @@ const ResultsView = ({ detections, onBack, onNavigate }: ResultsViewProps) => {
 
       {/* Confirm button */}
       {!loading && !error && (
-        <div className="px-6 pb-6 pt-2">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
           {confirmed ? (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

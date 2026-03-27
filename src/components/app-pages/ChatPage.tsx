@@ -164,7 +164,7 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden -mx-6 -mt-2">
+    <div className="flex-1 flex flex-col overflow-hidden -mx-2 sm:-mx-6 -mt-2">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -175,7 +175,7 @@ const ChatPage = () => {
       />
 
       {/* Header */}
-      <div className="px-6 pt-6 pb-3 flex items-center justify-between">
+      <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-3 flex items-center justify-between">
         <div>
           <h1 className="text-display mb-1">AI Assistant</h1>
           <p className="text-sm text-muted-foreground">
@@ -196,7 +196,7 @@ const ChatPage = () => {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-6 space-y-3 sm:space-y-4 pb-3 sm:pb-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 gap-4">
             <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center">

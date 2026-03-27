@@ -265,7 +265,7 @@ const ImpactPage = () => {
   }, [co2Saved, energySaved, waterSaved]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header with share */}
       <div className="flex items-center justify-between">
         <div>
