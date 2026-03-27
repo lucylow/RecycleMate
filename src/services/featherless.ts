@@ -179,35 +179,37 @@ export async function calculateImpactAI(items: Array<{ name: string; weight?: nu
 }> {
   const itemList = items.map((i) => `${i.name}${i.weight ? `: ${i.weight}g` : ""}`).join(", ");
 
-  const resp = await fetch(PROXY_URL, {
-    method: "POST",
-    headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an environmental impact calculator. Return ONLY valid JSON with no extra text.",
-        },
-        {
-          role: "user",
-          content: `Calculate environmental impact of properly recycling: ${itemList}. Return JSON: {"co2SavedKg": number, "treesSaved": number, "waterSavedLiters": number, "energySavedKwh": number}`,
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 256,
-    }),
-  });
+  try {
+    const resp = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: "You are an environmental impact calculator. Return ONLY valid JSON with no extra text." },
+          { role: "user", content: `Calculate environmental impact of properly recycling: ${itemList}. Return JSON: {"co2SavedKg": number, "treesSaved": number, "waterSavedLiters": number, "energySavedKwh": number}` },
+        ],
+        temperature: 0.1,
+        max_tokens: 256,
+      }),
+    });
 
-  if (!resp.ok) throw new Error("Impact calculation failed");
+    if (!resp.ok) throw new Error(`Impact API ${resp.status}`);
 
-  const data: FeatherlessResponse = await resp.json();
-  const content = data.choices?.[0]?.message?.content || "{}";
-
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Could not parse impact data");
-
-  return JSON.parse(jsonMatch[0]);
+    const data: FeatherlessResponse = await resp.json();
+    const content = data.choices?.[0]?.message?.content || "{}";
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Could not parse impact data");
+    return JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    console.warn("[featherless] Impact API failed, using estimate:", err);
+    const count = items.length || 1;
+    return {
+      co2SavedKg: Math.round(count * 0.3 * 100) / 100,
+      treesSaved: Math.round(count * 0.01 * 100) / 100,
+      waterSavedLiters: Math.round(count * 12.5 * 100) / 100,
+      energySavedKwh: Math.round(count * 1.8 * 100) / 100,
+    };
+  }
 }
 
 /**
