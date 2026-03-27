@@ -139,6 +139,7 @@ export const runInference = async (imageData?: string): Promise<DetectedItem[]> 
       }
       console.warn("AI vision unavailable, using mock fallback:", e);
     }
+    } // close validation else
   }
 
   // Final fallback: simulated detection
