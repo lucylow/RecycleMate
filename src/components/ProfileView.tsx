@@ -45,7 +45,7 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
         <div className="w-9 sm:w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-4 sm:space-y-6">
         {/* Eco Avatar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
