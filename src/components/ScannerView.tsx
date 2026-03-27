@@ -23,6 +23,33 @@ const BIN_LABEL_COLORS: Record<string, string> = {
   styrofoam: "bg-orange-500/80",
 };
 
+const CAMERA_CONSTRAINTS: MediaStreamConstraints[] = [
+  {
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false,
+  },
+  {
+    video: {
+      facingMode: { ideal: "user" },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false,
+  },
+  {
+    video: {
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false,
+  },
+  { video: true, audio: false },
+];
+
 const ScannerView = ({ onDetection }: ScannerViewProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
@@ -41,12 +68,15 @@ const ScannerView = ({ onDetection }: ScannerViewProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.srcObject = null;
+      videoRef.current.load();
     }
+
     setCameraActive(false);
     setIsVideoReady(false);
     setTorchOn(false);
@@ -54,59 +84,120 @@ const ScannerView = ({ onDetection }: ScannerViewProps) => {
     setDetections([]);
   }, []);
 
+  const getCameraStream = useCallback(async () => {
+    let lastError: unknown = null;
+
+    for (const constraints of CAMERA_CONSTRAINTS) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError ?? new Error("Unable to access a camera stream");
+  }, []);
+
+  const attachStreamToVideo = useCallback(async (stream: MediaStream) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.srcObject = stream;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+
+    const attemptPlayback = async () => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          await video.play();
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            setIsVideoReady(true);
+            return;
+          }
+        } catch (error) {
+          if (attempt === 2) throw error;
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 150));
+      }
+
+      throw new Error("Video stream started but frames were not rendered");
+    };
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      await attemptPlayback();
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        video.onloadedmetadata = null;
+        video.onloadeddata = null;
+        video.oncanplay = null;
+      };
+
+      const handleReady = () => {
+        cleanup();
+        void attemptPlayback().then(resolve).catch(reject);
+      };
+
+      video.onloadedmetadata = handleReady;
+      video.onloadeddata = handleReady;
+      video.oncanplay = handleReady;
+    });
+  }, []);
+
   const startCamera = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Camera is not supported in this browser. You can still upload images.");
+      return;
+    }
+
     try {
       stopCamera();
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
+      const stream = await getCameraStream();
       streamRef.current = stream;
       setPreviewImage(null);
       setDetections([]);
       setIsVideoReady(false);
       setCameraActive(true);
       setShowHint(true);
-      setTimeout(() => setShowHint(false), 4000);
+      window.setTimeout(() => setShowHint(false), 4000);
     } catch (error) {
       console.error("Camera startup error:", error);
       stopCamera();
       toast.error("Camera access failed. You can still upload images.");
     }
-  }, [stopCamera]);
+  }, [getCameraStream, stopCamera]);
 
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
 
   useEffect(() => {
-    if (!cameraActive || !streamRef.current || !videoRef.current) return;
+    if (!cameraActive || !streamRef.current || !videoRef.current || previewImage) return;
 
-    const video = videoRef.current;
-    video.srcObject = streamRef.current;
+    let cancelled = false;
 
-    const handleReady = async () => {
-      try {
-        await video.play();
-        setIsVideoReady(true);
-      } catch (playErr) {
-        console.warn("Video playback failed:", playErr);
-        toast.error("Camera connected, but preview could not start. Try clicking Enable Camera again.");
-      }
-    };
-
-    video.onloadedmetadata = () => {
-      void handleReady();
-    };
-
-    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      void handleReady();
-    }
+    void attachStreamToVideo(streamRef.current).catch((playErr) => {
+      if (cancelled) return;
+      console.warn("Video playback failed:", playErr);
+      toast.error("Camera connected, but preview could not start. Try enabling the camera again.");
+    });
 
     return () => {
-      video.onloadedmetadata = null;
+      cancelled = true;
+      if (videoRef.current) {
+        videoRef.current.onloadedmetadata = null;
+        videoRef.current.onloadeddata = null;
+        videoRef.current.oncanplay = null;
+      }
     };
-  }, [cameraActive]);
+  }, [attachStreamToVideo, cameraActive, previewImage]);
 
   const toggleTorch = useCallback(async () => {
     const track = streamRef.current?.getVideoTracks()[0];
