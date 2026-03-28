@@ -84,6 +84,12 @@ const ProfileView = ({ onBack }: ProfileViewProps) => {
         {/* Streak Shield */}
         <StreakShield />
 
+        {/* Streak Calendar */}
+        <StreakCalendar />
+
+        {/* Weekly Progress */}
+        <WeeklyProgressRing />
+
         {/* Daily Challenge */}
         <DailyChallengeCard />
 
