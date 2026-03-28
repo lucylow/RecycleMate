@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import recyclingProblemImg from "@/assets/recycling-problem.png";
 
 const stats = [
   { value: "2B+", label: "Tons of waste generated annually", source: "World Bank, 2018" },
