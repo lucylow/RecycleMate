@@ -9,6 +9,8 @@ import LevelProgress from "@/components/profile/LevelProgress";
 import BadgeGrid from "@/components/profile/BadgeGrid";
 import DailyChallengeCard from "@/components/profile/DailyChallengeCard";
 import StreakShield from "@/components/profile/StreakShield";
+import StreakCalendar from "@/components/gamification/StreakCalendar";
+import WeeklyProgressRing from "@/components/gamification/WeeklyProgressRing";
 import { getImpactEquivalencies, type UserGamificationStats } from "@/services/gamificationEngine";
 
 interface ProfileViewProps {
