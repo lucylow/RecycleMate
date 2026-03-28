@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef } from "react";
+import { showXPPopup } from "@/components/gamification/XPPopup";
+import { showLevelUp } from "@/components/gamification/LevelUpModal";
+import { getLevel, getStreakMultiplier } from "@/services/gamificationEngine";
 
 interface UserContextType {
   points: number;
