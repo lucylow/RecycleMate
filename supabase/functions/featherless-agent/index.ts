@@ -344,13 +344,18 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const start = Date.now();
+  let apiMessages: any[] = [];
+  let providerUrl = "";
+  let demoMode = false;
+
   try {
     let body: any;
     try { body = await req.json(); } catch {
       return errorResponse("Invalid JSON body", 400);
     }
 
-    const { messages, userContext, model, demoMode } = body;
+    const { messages, userContext, model, demoMode: dm } = body;
+    demoMode = !!dm;
     if (!Array.isArray(messages) || messages.length === 0) {
       return errorResponse("'messages' must be a non-empty array", 400);
     }
@@ -376,7 +381,7 @@ IMPORTANT RULES:
 
 ${userContext ? `User context: Points=${userContext.points ?? 0}, Streak=${userContext.streak ?? 0}, Scans=${userContext.totalScans ?? 0}` : ""}`;
 
-    const apiMessages = [
+    apiMessages = [
       { role: "system", content: systemPrompt },
       ...messages.map((m: any) => ({ role: m.role, content: m.content })),
     ];
@@ -385,7 +390,6 @@ ${userContext ? `User context: Points=${userContext.points ?? 0}, Streak=${userC
     const FEATHERLESS_API_KEY = Deno.env.get("FEATHERLESS_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    let providerUrl: string;
     let providerKey: string;
     let providerModel: string;
 
