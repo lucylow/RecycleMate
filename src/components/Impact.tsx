@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import recyclingProblemImg from "@/assets/recycling-problem.png";
 
 const stats = [
   { value: "2B+", label: "Tons of waste generated annually", source: "World Bank, 2018" },
@@ -34,6 +35,21 @@ const Impact = () => {
         >
           <span className="text-label text-muted-foreground">SDG 12 — Responsible Consumption</span>
           <h2 className="text-display-xl mt-3">The Problem Is<br />Measurable</h2>
+        </motion.div>
+
+        {/* Problem illustration */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-14 rounded-3xl overflow-hidden border border-border shadow-elevated"
+        >
+          <img
+            src={recyclingProblemImg}
+            alt="The recycling problem — confused people trying to figure out how to recycle a pizza box, illustrating common recycling challenges"
+            className="w-full h-auto"
+            loading="lazy"
+          />
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
