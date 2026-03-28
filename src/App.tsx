@@ -31,6 +31,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <ConnectivityToast />
+          <XPPopup />
+          <LevelUpModal />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
