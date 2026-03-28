@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserProvider } from "@/context/UserContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ConnectivityToast from "@/components/ConnectivityToast";
+import XPPopup from "@/components/gamification/XPPopup";
+import LevelUpModal from "@/components/gamification/LevelUpModal";
 import Index from "./pages/Index.tsx";
 import AppScreen from "./pages/AppScreen.tsx";
 import GraphQLSecurityDocs from "./pages/GraphQLSecurityDocs.tsx";
@@ -29,6 +31,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <ConnectivityToast />
+          <XPPopup />
+          <LevelUpModal />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

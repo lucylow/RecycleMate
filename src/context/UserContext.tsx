@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef } from "react";
+import { showXPPopup } from "@/components/gamification/XPPopup";
+import { showLevelUp } from "@/components/gamification/LevelUpModal";
+import { getLevel, getStreakMultiplier } from "@/services/gamificationEngine";
 
 interface UserContextType {
   points: number;
@@ -68,13 +71,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [achievements]);
 
+  const prevLevelRef = useRef(getLevel(0).level);
+
   const addPoints = useCallback((pts: number) => {
     setPoints(prev => {
-      const newTotal = prev + pts;
+      const multiplier = getStreakMultiplier(streak);
+      const boosted = Math.round(pts * multiplier);
+      const newTotal = prev + boosted;
+
+      // XP popup
+      showXPPopup(boosted, multiplier > 1 ? `${multiplier}x streak` : undefined);
+
+      // Level-up check
+      const oldLevel = getLevel(prev);
+      const newLevel = getLevel(newTotal);
+      if (newLevel.level > oldLevel.level) {
+        setTimeout(() => showLevelUp(newLevel.level, newLevel.title, newLevel.emoji), 600);
+      }
+
       checkAchievements(newTotal);
       return newTotal;
     });
-  }, [checkAchievements]);
+  }, [checkAchievements, streak]);
 
   const incrementStreak = useCallback(() => setStreak(prev => prev + 1), []);
   const resetStreak = useCallback(() => setStreak(0), []);
