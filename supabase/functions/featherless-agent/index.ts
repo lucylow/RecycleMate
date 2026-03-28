@@ -476,12 +476,39 @@ ${userContext ? `User context: Points=${userContext.points ?? 0}, Streak=${userC
     if (e instanceof DOMException && e.name === "AbortError") {
       return errorResponse("Agent request timed out.", 504);
     }
-    if (e.status === 429) {
-      return errorResponse(e.message, 429);
+
+    // On 429 (rate limit) or 402 from Featherless, try Lovable AI as fallback
+    if ((e.status === 429 || e.status === 402) && providerUrl === FEATHERLESS_URL) {
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (LOVABLE_API_KEY) {
+        console.log(`[featherless-agent] Featherless ${e.status}, falling back to Lovable AI`);
+        try {
+          const fallbackData = await callProvider(
+            apiMessages,
+            [],
+            LOVABLE_API_KEY,
+            LOVABLE_GATEWAY,
+            "google/gemini-3-flash-preview",
+            1,
+          );
+          const fallbackContent = fallbackData.choices?.[0]?.message?.content || "I'm experiencing high demand. Please try again shortly.";
+          console.log(`[featherless-agent] Lovable fallback OK in ${Date.now() - start}ms`);
+          return new Response(JSON.stringify({
+            text: fallbackContent,
+            toolsUsed: [],
+            demoMode: !!demoMode,
+            fallback: true,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } catch (fallbackErr) {
+          console.error(`[featherless-agent] Lovable fallback also failed:`, fallbackErr);
+        }
+      }
     }
-    if (e.status === 402) {
-      return errorResponse(e.message, 402);
-    }
+
+    if (e.status === 429) return errorResponse(e.message, 429);
+    if (e.status === 402) return errorResponse(e.message, 402);
     console.error(`[featherless-agent] Error after ${Date.now() - start}ms:`, e);
     return errorResponse(e instanceof Error ? e.message : "Agent error", 500);
   }
